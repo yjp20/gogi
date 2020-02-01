@@ -106,9 +106,7 @@ func (g *Game) Listen(port string) error {
 
 	r.GET(g.Context.Prefix+"/", g.homeHandler())
 	r.GET(g.Context.Prefix+"/game", g.gameHandler())
-	r.GET(g.Context.Prefix+"/rooms", g.roomsHandler())
 	r.GET(g.Context.Prefix+"/room/new", g.roomNewHandler())
-	r.GET(g.Context.Prefix+"/room/id/:id", g.roomHandler())
 	r.GET(g.Context.Prefix+"/auth/logout", g.logoutHandler())
 
 	for _, authMethod := range g.Context.AuthMethods {
