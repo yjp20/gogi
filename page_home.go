@@ -1,10 +1,11 @@
 package gogi
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/yjp20/gogi/client"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -20,50 +21,52 @@ var homeTemplate = `<!doctype html>
 	<style> .card { margin-bottom: 1em; border: 1px solid #ccc; border-radius: 5px; box-shadow: none; } </style>
 </head>
 <body>
-	<section class="hero has-background-light is-fullheight">
-		<div class="hero-body">
-			<div class="container">
-				<div class="columns">
-					<div class="column is-6 is-offset-3 is-4-widescreen is-offset-4-widescreen">
-						<h1 class="title is-size-1"> {{.Context.Name}} </h1>
-						{{range .Context.AuthMethods}}
-							<div class="card">
-								{{exec .Template $}}
-							</div>
-						{{end}}
-						<p class="has-text-grey has-text-centered"> built with <a href="https://github.com/yjp20/gogi">gogi</a> </p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
+	<div id="router"></div>
+	<script src="{{.Context.Prefix}}/wasm.js"></script>
+	<script>
+		const go = new Go();
+		WebAssembly.instantiateStreaming(fetch("{{.Context.Prefix}}/wasm"), go.importObject).then((result) => {
+			go.run(result.instance);
+		});
+	</script>
 </body>
 </html>
 `
+
+var wasmBinary []byte
 
 func init() {
 	var err error
 	homeTemplateParsed = template.New("").Funcs(templateFunctions)
 	_, err = homeTemplateParsed.Parse(homeTemplate)
-
 	if err != nil {
-		fmt.Printf("%s", err)
+		log.Fatalf("%v", err)
+	}
+	wasmBinary, err = client.CompileIndex(struct{}{})
+	if err != nil {
+		log.Fatalf("%v", err)
 	}
 }
 
 func (g *Game) homeHandler() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		s, _ := g.Context.Store.Get(r, "session")
-
-		u, ok := s.Values["self"].(uint)
-		log.Printf("%v %d", u)
-		if ok {
-			http.Redirect(w, r, g.Context.Prefix+"/rooms", 302)
-			return
-		}
-		err := homeTemplateParsed.Execute(w, &RenderData{Context: g.Context})
+		err := homeTemplateParsed.Execute(w, &RenderData{
+			Context: g.Context,
+		})
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+}
+
+func (g *Game) homeWASMHandler() httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		w.Write(wasmBinary)
+	}
+}
+
+func (g *Game) homeWASMLoaderHandler() httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		w.Write(client.WasmLoader)
 	}
 }

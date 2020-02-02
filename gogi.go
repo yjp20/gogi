@@ -105,7 +105,8 @@ func (g *Game) Listen(port string) error {
 	r := httprouter.New()
 
 	r.GET(g.Context.Prefix+"/", g.homeHandler())
-	r.GET(g.Context.Prefix+"/game", g.gameHandler())
+	r.GET(g.Context.Prefix+"/wasm", g.homeWASMHandler())
+	r.GET(g.Context.Prefix+"/wasm.js", g.homeWASMLoaderHandler())
 	r.GET(g.Context.Prefix+"/room/new", g.roomNewHandler())
 	r.GET(g.Context.Prefix+"/auth/logout", g.logoutHandler())
 
