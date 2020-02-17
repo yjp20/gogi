@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/yjp20/gogi/client"
+
 	"github.com/NYTimes/gziphandler"
 	"github.com/gorilla/sessions"
 	"github.com/jinzhu/gorm"
@@ -106,9 +108,9 @@ func (g *Game) Listen(port string) error {
 
 	r.GET(g.Context.Prefix+"/", g.homeHandler())
 	r.GET(g.Context.Prefix+"/wasm", g.homeWASMHandler())
-	r.GET(g.Context.Prefix+"/wasm.js", g.homeWASMLoaderHandler())
 	r.GET(g.Context.Prefix+"/room/new", g.roomNewHandler())
 	r.GET(g.Context.Prefix+"/auth/logout", g.logoutHandler())
+	r.ServeFiles(g.Context.Prefix+"/static/*filepath", client.Assets)
 
 	for _, authMethod := range g.Context.AuthMethods {
 		for _, h := range authMethod.Handlers(g.Context) {
@@ -121,5 +123,6 @@ func (g *Game) Listen(port string) error {
 		m = mw(m)
 	}
 
+	log.Println("Starting Webserver")
 	return http.ListenAndServe(port, m)
 }

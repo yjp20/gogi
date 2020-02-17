@@ -1,0 +1,3 @@
+#!/bin/bash
+
+go generate ./client && (cd ./examples/gogi-tic && go run .)

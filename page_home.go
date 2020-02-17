@@ -17,12 +17,11 @@ var homeTemplate = `<!doctype html>
 	<title> {{.Context.Name}} </title>
 	<meta name="description" content="{{ .Context.Description }}">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
-	<style> .card { margin-bottom: 1em; border: 1px solid #ccc; border-radius: 5px; box-shadow: none; } </style>
+	<link rel="stylesheet" href="{{.Context.Prefix}}/static/css/main.css">
 </head>
 <body>
 	<div id="router"></div>
-	<script src="{{.Context.Prefix}}/wasm.js"></script>
+	<script src="{{.Context.Prefix}}/static/js/wasm_exec.js"></script>
 	<script>
 		const go = new Go();
 		WebAssembly.instantiateStreaming(fetch("{{.Context.Prefix}}/wasm"), go.importObject).then((result) => {
@@ -62,11 +61,5 @@ func (g *Game) homeHandler() httprouter.Handle {
 func (g *Game) homeWASMHandler() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		w.Write(wasmBinary)
-	}
-}
-
-func (g *Game) homeWASMLoaderHandler() httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		w.Write(client.WasmLoader)
 	}
 }

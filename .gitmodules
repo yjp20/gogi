@@ -1,0 +1,3 @@
+[submodule "client/src/scss/briefcss"]
+	path = client/src/scss/briefcss
+	url = https://github.com/yjp20/briefcss
