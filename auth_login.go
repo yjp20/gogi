@@ -1,91 +1,172 @@
 package gogi
 
 import (
-	"html/template"
-	"log"
 	"net/http"
-	// "reflect"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-const loginAuthTemplate = `<div class="card-content">
-	<div class="tabs is-centered">
-		<ul style="border-bottom: 1px solid #ccc">
-			<li><a onclick="document.getElementById('loginForm').style = ''; document.getElementById('signupForm').style = 'display: none';">Login</a></li>
-			<li><a onclick="document.getElementById('loginForm').style = 'display: none'; document.getElementById('signupForm').style = '';">Signup</a></li>
-		</ul>
-	</div>
-	<div id="loginSignupForms">
-		<div id="loginForm">
-			<form class="form">
-				<div class="field">
-					<label class="label"> Username </label>
-					<div class="control">
-						<input name="username" class="input" type="text" placeholder="Username">
-					</div>
-				</div>
-				<div class="field">
-					<label class="label"> Password </label>
-					<div class="control">
-						<input name="password" class="input" type="password" placeholder="Password">
-					</div>
-				</div>
-				<div class="field">
-					<div class="control">
-						<button class="button is-fullwidth"> Login </button>
-					</div>
-				</div>
-			</form>
-		</div>
-		<div id="signupForm" style="display: none">
-			<form class="form">
-				<div class="field">
-					<label class="label"> Username </label>
-					<div class="control">
-						<input name="username" class="input" type="text" placeholder="Username">
-					</div>
-				</div>
-				<div class="field">
-					<label class="label"> Email </label>
-					<div class="control">
-						<input name="email" class="input" type="email" placeholder="email">
-					</div>
-				</div>
-				<div class="field">
-					<label class="label"> Password </label>
-					<div class="control">
-						<input name="password" class="input" type="passowrd" placeholder="Password">
-					</div>
-				</div>
-				<div class="field">
-					<div class="control">
-						<button class="button is-fullwidth"> Signup </button>
-					</div>
-				</div>
-			</form>
-		</div>
-	</div>
-</div>`
+const loginAuthClient = `package main
+
+import (
+	"github.com/gopherjs/vecty"
+	"github.com/gopherjs/vecty/elem"
+	"github.com/gopherjs/vecty/event"
+)
 
 type LoginAuth struct {
-	TemplateParsed *template.Template
+	vecty.Core
+
+	isSignup bool
 }
 
-func (a *LoginAuth) Init(c *Context) error {
-	var err error
-	if c.DB == nil {
-		log.Fatal("Login Auth requires a DB provider")
-	}
-	if a.TemplateParsed == nil {
-		a.TemplateParsed = template.New("")
-		_, err = a.TemplateParsed.Parse(loginAuthTemplate)
-	}
-	return err
+func (d *LoginAuth) toSignup(e *vecty.Event) {
+	d.isSignup = true
+	vecty.Rerender(d)
 }
 
-func (a *LoginAuth) Template() *template.Template {
-	return a.TemplateParsed
+func (d *LoginAuth) toLogin(e *vecty.Event) {
+	d.isSignup = false
+	vecty.Rerender(d)
+}
+
+func (d *LoginAuth) Render() vecty.ComponentOrHTML {
+	return elem.Div(
+		vecty.Markup(
+			vecty.Class("card"),
+		),
+		elem.Div(
+			vecty.Markup(
+				vecty.Class("card-body"),
+			),
+			elem.Div(
+				vecty.Markup(
+					vecty.Class("field"),
+				),
+				elem.Paragraph(
+					vecty.Markup(
+						vecty.Class("label"),
+					),
+					vecty.Text("Username"),
+				),
+				elem.Input(
+					vecty.Markup(
+						vecty.Property("type", "text"),
+						vecty.Property("name", "username"),
+					),
+				),
+			),
+			elem.Div(
+				vecty.Markup(
+					vecty.Class("field"),
+				),
+				elem.Paragraph(
+					vecty.Markup(
+						vecty.Class("label"),
+					),
+					vecty.Text("Password"),
+				),
+				elem.Input(
+					vecty.Markup(
+						vecty.Property("type", "password"),
+						vecty.Property("name", "password"),
+					),
+				),
+			),
+			vecty.If(d.isSignup,
+				elem.Div(
+					vecty.Markup(
+						vecty.Class("field"),
+					),
+					elem.Paragraph(
+						vecty.Markup(
+							vecty.Class("label"),
+						),
+						vecty.Text("Password Confirm"),
+					),
+					elem.Input(
+						vecty.Markup(
+							vecty.Property("type", "password"),
+							vecty.Property("name", "password_confirm"),
+						),
+					),
+				),
+				elem.Div(
+					vecty.Markup(
+						vecty.Class("field"),
+					),
+					elem.Paragraph(
+						vecty.Markup(
+							vecty.Class("label"),
+						),
+						vecty.Text("Email"),
+					),
+					elem.Input(
+						vecty.Markup(
+							vecty.Property("type", "email"),
+							vecty.Property("name", "email"),
+						),
+					),
+				),
+			),
+		),
+		elem.Div(
+			vecty.Markup(
+				vecty.Class("card-body"),
+				vecty.MarkupIf(!d.isSignup, vecty.Class("has-bg-lightred")),
+				vecty.MarkupIf(d.isSignup, vecty.Class("has-bg-lightgreen")),
+			),
+			elem.Div(
+				vecty.Markup(
+					vecty.Class("field"),
+				),
+				vecty.If(d.isSignup,
+					elem.Button(
+						vecty.Markup(
+							vecty.Class("button"),
+							vecty.Property("type", "button"),
+						),
+						vecty.Text("Signup"),
+					),
+					elem.Button(
+						vecty.Markup(
+							vecty.Class("button"),
+							vecty.Class("is-link"),
+							event.Click(d.toLogin),
+						),
+						vecty.Text("Login"),
+					),
+				),
+				vecty.If(!d.isSignup,
+					elem.Button(
+						vecty.Markup(
+							vecty.Class("button"),
+							vecty.Property("type", "button"),
+						),
+						vecty.Text("Login"),
+					),
+					elem.Button(
+						vecty.Markup(
+							vecty.Class("button"),
+							vecty.Class("is-link"),
+							event.Click(d.toSignup),
+						),
+						vecty.Text("Signup"),
+					),
+				),
+			),
+		),
+	)
+}`
+
+type LoginAuth struct{}
+
+func (a *LoginAuth) Name() string {
+	return "LoginAuth"
+}
+
+func (a *LoginAuth) Client() (string, string) {
+	return "ui/auth_login.go", loginAuthClient
 }
 
 func (a *LoginAuth) Handlers(c *Context) []AuthMethodHandler {

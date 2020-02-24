@@ -1,50 +1,135 @@
 package gogi
 
 import (
-	"html/template"
-	"log"
+	"encoding/json"
 	"net/http"
+	"time"
 
-	// "github.com/gorilla/sessions"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/julienschmidt/httprouter"
 )
 
-const guestAuthTemplate = `<div class="card-content">
-	<form class="form" method="post" action="{{.Context.Prefix}}/auth/guest">
-		<div class="field">
-			<label class="label"> Guest Login </label>
-			<div class="control">
-				<input name="nick" class="input" type="text" placeholder="Nickname">
-			</div>
-		</div>
-		<div class="field">
-			<button class="button is-fullwidth"> Go </button>
-		</div>
-	</form>
-</div>`
+const guestAuthClient = `package main
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"log"
+
+	"github.com/gopherjs/vecty"
+	"github.com/gopherjs/vecty/elem"
+	"github.com/gopherjs/vecty/event"
+)
 
 type GuestAuth struct {
-	TemplateParsed *template.Template
+	vecty.Core
 }
 
-func (a *GuestAuth) Init(c *Context) error {
-	var err error
-	if c.DB == nil {
-		log.Fatal("Guest auth requires a DB provider")
-	}
-	if a.TemplateParsed == nil {
-		a.TemplateParsed = template.New("")
-		_, err = a.TemplateParsed.Parse(guestAuthTemplate)
-	}
-	return err
+func (g *GuestAuth) onSubmit(e *vecty.Event) {
+	go func() {
+		resp, err := http.Post("{{.Prefix}}/auth/guest", "application/json", nil)
+		if err != nil {
+			d.Dispatch(&Error{
+				Message: "Error getting login response",
+			})
+			log.Printf("Error getting login response: %v", err)
+			return
+		}
+		defer resp.Body.Close()
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			d.Dispatch(&Error{
+				Message: "Error reading login response",
+			})
+			log.Printf("Error reading login response: %v", err)
+			return
+		}
+		m := make(map[string]string)
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			d.Dispatch(&Error{
+				Message: "Error unmarshalling login response",
+			})
+			log.Printf("Error unmarshalling login response: %v", err)
+			return
+		}
+		d.Dispatch(&Login{
+			Token: m["token"],
+			LoggedIn: true,
+		})
+	}()
 }
 
-func (a *GuestAuth) Template() *template.Template {
-	return a.TemplateParsed
+func (g *GuestAuth) Render() vecty.ComponentOrHTML {
+	return elem.Div(
+		vecty.Markup(
+			vecty.Class("card"),
+		),
+		elem.Div(
+			vecty.Markup(
+				vecty.Class("card-body"),
+			),
+			g.renderNickField(),
+		),
+		elem.Div(
+			vecty.Markup(
+				vecty.Class("card-body"),
+				vecty.Class("has-bg-lightblue"),
+			),
+			g.renderSubmitField(),
+		),
+	)
+}
+
+func (g *GuestAuth) renderNickField() vecty.ComponentOrHTML{
+	return elem.Div(
+		vecty.Markup(
+			vecty.Class("field"),
+		),
+		elem.Paragraph(
+			vecty.Markup(
+				vecty.Class("label"),
+			),
+			vecty.Text("Nickname"),
+		),
+		elem.Input(
+			vecty.Markup(
+				vecty.Property("type", "text"),
+				vecty.Property("name", "nick"),
+			),
+		),
+	)
+}
+
+func (g *GuestAuth) renderSubmitField() vecty.ComponentOrHTML{
+	return elem.Div(
+		vecty.Markup(
+			vecty.Class("field"),
+		),
+		elem.Button(
+			vecty.Markup(
+				vecty.Class("button"),
+				vecty.Property("type", "button"),
+				event.Click(g.onSubmit),
+			),
+			vecty.Text("Guest Login"),
+		),
+	)
+}`
+
+type GuestAuth struct{}
+
+func (a *GuestAuth) Name() string {
+	return "GuestAuth"
+}
+
+func (a *GuestAuth) Client() (string, string) {
+	return "ui/auth_guest.go", guestAuthClient
 }
 
 func (a *GuestAuth) Handlers(c *Context) []AuthMethodHandler {
-	nickHandler := AuthMethodHandler{
+	guestHandler := AuthMethodHandler{
 		"POST", "/auth/guest", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			err := r.ParseForm()
 			if err != nil {
@@ -63,16 +148,21 @@ func (a *GuestAuth) Handlers(c *Context) []AuthMethodHandler {
 				return
 			}
 
-			s, _ := c.Store.Get(r, "session")
-			s.Options.MaxAge = 24 * 60 * 60 * 1000 // Save for one day
-			s.Values["self"] = u.GetID()
-			err = s.Save(r, w)
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"self_id": u.GetID(),
+				"nbf":     time.Now().Unix(),
+			})
+			tokenString, err := token.SignedString(c.Secret)
 			if err != nil {
 				http.Error(w, err.Error(), 400)
 				return
 			}
-			http.Redirect(w, r, c.Prefix+"/rooms", 302)
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{
+				"token": tokenString,
+			})
 		},
 	}
-	return []AuthMethodHandler{nickHandler}
+	return []AuthMethodHandler{guestHandler}
 }

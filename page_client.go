@@ -10,21 +10,22 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+var wasmBinary []byte
 var homeTemplateParsed *template.Template
 var homeTemplate = `<!doctype html>
 <html>
 <head>
-	<title> {{.Context.Name}} </title>
-	<meta name="description" content="{{ .Context.Description }}">
+	<title> {{.Name}} </title>
+	<meta name="description" content="{{.Description }}">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="{{.Context.Prefix}}/static/css/main.css">
+	<link rel="stylesheet" href="{{.Prefix}}/static/css/main.css">
 </head>
 <body>
 	<div id="router"></div>
-	<script src="{{.Context.Prefix}}/static/js/wasm_exec.js"></script>
+	<script src="{{.Prefix}}/static/js/wasm_exec.js"></script>
 	<script>
 		const go = new Go();
-		WebAssembly.instantiateStreaming(fetch("{{.Context.Prefix}}/wasm"), go.importObject).then((result) => {
+		WebAssembly.instantiateStreaming(fetch("{{.Prefix}}/wasm"), go.importObject).then((result) => {
 			go.run(result.instance);
 		});
 	</script>
@@ -32,33 +33,34 @@ var homeTemplate = `<!doctype html>
 </html>
 `
 
-var wasmBinary []byte
-
-func init() {
+func (g *Game) InitClient() {
 	var err error
-	homeTemplateParsed = template.New("").Funcs(templateFunctions)
+	homeTemplateParsed = template.New("")
 	_, err = homeTemplateParsed.Parse(homeTemplate)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
-	wasmBinary, err = client.CompileIndex(struct{}{})
+	authClientFiles := make(map[string][]byte)
+	for _, am := range g.Context.AuthMethods {
+		filename, script := am.Client()
+		authClientFiles[filename] = []byte(script)
+	}
+	wasmBinary, err = client.CompileIndex(g.Context, authClientFiles)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 }
 
-func (g *Game) homeHandler() httprouter.Handle {
+func (g *Game) clientHandler() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		err := homeTemplateParsed.Execute(w, &RenderData{
-			Context: g.Context,
-		})
+		err := homeTemplateParsed.Execute(w, g.Context)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 }
 
-func (g *Game) homeWASMHandler() httprouter.Handle {
+func (g *Game) clientWASMHandler() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		w.Write(wasmBinary)
 	}

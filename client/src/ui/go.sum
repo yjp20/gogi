@@ -10,5 +10,9 @@ github.com/gopherjs/vecty v0.0.0-20191227222824-6a0a25ee5a96/go.mod h1:Yd9AOfl6l
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/yjp20/godux v0.0.0-20200223003044-6ac176850372 h1:lyHEbeeWbqeLdQf98wnji1lh8Mc0eJIwj3CpFRfwoIo=
+github.com/yjp20/godux v0.0.0-20200223003044-6ac176850372/go.mod h1:vLK9h54JOypDJ4aXpjvRveDLLpY50bAcm9GjoDJUJ/M=
+github.com/yjp20/gogi v0.0.0-20200217092031-8cd288f0351b h1:gFCa3ivfgQGHxp7BjQjJaRMOc344I0YOzEmQb5Mr1z0=
+github.com/yjp20/gogi/examples/gogi-tic v0.0.0-20200217092031-8cd288f0351b h1:IFepb3/j+F32aF8+m3RdjLaxG4fRyJOoYd/uv9n/pj4=
 marwan.io/vecty-router v0.0.0-20190701140924-0b5c86ca8801 h1:iCUUsddFprsvTAbyIV2QYDqirAA9V8U4dX5QfqSqNso=
 marwan.io/vecty-router v0.0.0-20190701140924-0b5c86ca8801/go.mod h1:9F8DpkcpW1dEOqVQ/Bu/ltLFZSXxdYofgjxgxJ/H/Zc=

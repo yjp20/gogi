@@ -3,19 +3,25 @@ package main
 import (
 	"github.com/gopherjs/vecty"
 	"github.com/gopherjs/vecty/elem"
-	"marwan.io/vecty-router"
+	"github.com/yjp20/godux"
 )
 
-var d Dispatcher
+var (
+	d         godux.Dispatcher
+	s         Store
+	userToken string
+)
 
 func main() {
-	d = Dispatcher{}
+	s.Init()
 	d.Init()
-	vecty.RenderBody(&PageView{})
+	d.Register(s.OnAction)
+	vecty.RenderBody(s.Connect(&PageView{}))
 }
 
 type PageView struct {
 	vecty.Core
+	LoggedIn bool
 }
 
 func (p *PageView) Render() vecty.ComponentOrHTML {
@@ -29,10 +35,26 @@ func (p *PageView) Render() vecty.ComponentOrHTML {
 			),
 			elem.Div(
 				vecty.Markup(vecty.Class("container")),
-				router.NewRoute("/", &LoginView{}, router.NewRouteOpts{ExactMatch: true}),
-				router.NewRoute("/rooms", &LoginView{}, router.NewRouteOpts{}),
-				router.NewRoute("/room/{id}", &LoginView{}, router.NewRouteOpts{}),
+				vecty.If(!p.LoggedIn, s.Connect(&LoginView{})),
+				vecty.If(p.LoggedIn, &LoggedInView{}),
 			),
 		),
+	)
+}
+
+func (p *PageView) Connect() map[interface{}]interface{} {
+	return map[interface{}]interface{}{
+		&p.LoggedIn: &s.LoggedIn,
+	}
+}
+
+type LoggedInView struct {
+	vecty.Core
+	inRoom bool
+}
+
+func (l *LoggedInView) Render() vecty.ComponentOrHTML {
+	return elem.Div(
+		&RoomsView{},
 	)
 }

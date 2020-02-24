@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de
 	github.com/gopherjs/vecty v0.0.0-20191227222824-6a0a25ee5a96
 	github.com/gorilla/sessions v1.2.0
@@ -19,6 +20,7 @@ require (
 	github.com/spf13/cobra v0.0.5 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
+	github.com/yjp20/godux v0.0.0-20200223003044-6ac176850372 // indirect
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
 	golang.org/x/tools v0.0.0-20200131211209-ecb101ed6550 // indirect
 	marwan.io/vecty-router v0.0.0-20190701140924-0b5c86ca8801

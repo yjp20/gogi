@@ -8,6 +8,7 @@ package client
 import (
 	"io/ioutil"
 	"log"
+	"strings"
 )
 
 func getFile(s string) []byte {
@@ -30,10 +31,15 @@ func addFile(m map[string][]byte, s string) {
 
 func Templates() map[string][]byte {
 	m := make(map[string][]byte)
-	addFile(m, "ui/index.go")
-	addFile(m, "ui/dispatcher.go")
-	addFile(m, "ui/page_login.go")
-	addFile(m, "ui/go.mod")
-	addFile(m, "ui/go.sum")
+	for k, v := range Assets.(vfsgen۰FS) {
+		switch v.(type) {
+		case *vfsgen۰DirInfo:
+			break
+		default:
+			if strings.HasPrefix(k, "/ui") {
+				addFile(m, k)
+			}
+		}
+	}
 	return m
 }

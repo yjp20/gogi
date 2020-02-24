@@ -36,7 +36,11 @@ func RenderTemplates(templates map[string][]byte, data interface{}) (map[string]
 	rendered := make(map[string][]byte)
 	for key, val := range templates {
 		b := bytes.NewBuffer([]byte{})
-		tmpl, err := template.New("").Parse(string(val))
+		tmpl, err := template.New("").Funcs(map[string]interface{}{
+			"newline": func() string {
+				return "\n"
+			},
+		}).Parse(string(val))
 		if err != nil {
 			return rendered, err
 		}
@@ -49,8 +53,12 @@ func RenderTemplates(templates map[string][]byte, data interface{}) (map[string]
 	return rendered, nil
 }
 
-func CompileIndex(data interface{}) ([]byte, error) {
-	rendered, err := RenderTemplates(Templates(), data)
+func CompileIndex(data interface{}, extra map[string][]byte) ([]byte, error) {
+	tmpls := Templates()
+	for k, v := range extra {
+		tmpls[k] = v
+	}
+	rendered, err := RenderTemplates(tmpls, data)
 	if err != nil {
 		return []byte(""), err
 	}
@@ -63,21 +71,21 @@ func CompileWasmFrom(source map[string][]byte) ([]byte, error) {
 		return []byte{}, fmt.Errorf("error creating temp directory: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
-
-	err = os.Mkdir(filepath.Join(tmpDir, "ui"), 0755)
-	if err != nil {
-		return []byte{}, fmt.Errorf("error creating ui folder in temp directory: %v", err)
-	}
-
 	ctx := context.TODO()
 	buildCtx, cancel := context.WithTimeout(ctx, maxCompileTime)
 	defer cancel()
-
-	// copy files from statically stored Assets to the temp folder
 	for name, val := range source {
-		ioutil.WriteFile(filepath.Join(tmpDir, name), val, 0644)
+		dir, _ := filepath.Split(name)
+		dir = filepath.Join(tmpDir, dir)
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return []byte{}, fmt.Errorf("error creating folder in temp directory: %v", err)
+		}
+		err = ioutil.WriteFile(filepath.Join(tmpDir, name), val, 0644)
+		if err != nil {
+			return []byte{}, fmt.Errorf("error writing file in temp directory: %v", err)
+		}
 	}
-
 	output := bytes.NewBuffer([]byte{})
 	cmd := exec.CommandContext(buildCtx, goBin,
 		"build",
@@ -89,16 +97,13 @@ func CompileWasmFrom(source map[string][]byte) ([]byte, error) {
 	cmd.Stdout = output
 	goCache := filepath.Join(tmpDir, "gocache")
 	cmd.Env = []string{"GOOS=js", "GOARCH=wasm", "GOCACHE=" + goCache, "GOPATH=" + findGopath()}
-
 	err = cmd.Run()
 	if err != nil {
 		return []byte{}, fmt.Errorf("error compiling: %v\n\nlog output:\n%s", err, output.String())
 	}
-
 	res, err := ioutil.ReadFile(filepath.Join(tmpDir, "ui/output"))
 	if err != nil {
 		return []byte{}, fmt.Errorf("cannot read from file: %v", err)
 	}
-
 	return []byte(res), nil
 }

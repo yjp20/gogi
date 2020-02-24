@@ -1,1 +1,9 @@
+$gap: 32px;
+$border-width: 2px;
+$breakpoints:   (
+	"tablet":     700px,
+	"desktop":    960px+(2*$gap),
+);
+
+
 @import "briefcss/main.scss";

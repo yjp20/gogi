@@ -2,9 +2,6 @@ package main
 
 import (
 	"github.com/yjp20/gogi"
-
-	"github.com/gorilla/sessions"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 type UserModel struct {
@@ -42,15 +39,15 @@ func (s *ManagerModel) Events() {
 
 func main() {
 	g := gogi.NewGame(
-		"tic-tac-toe",
+		"Tic Tac Toe",
 		&UserModel{},
 		&RoomModel{},
 		&ManagerModel{},
 
-		gogi.WithDBProvider("sqlite3", "tmp.db"),
-		gogi.WithSessionStore(sessions.NewCookieStore([]byte("WHAT"))),
 		gogi.WithAuthMethod(&gogi.GuestAuth{}),
 		gogi.WithAuthMethod(&gogi.LoginAuth{}),
+		gogi.WithDescription("Tic Tac Toe is a game that can be traced to Ancient Egypt, 1300 BCE, and is one of the most iconic games of the modern world. This particular implementation of Tic Tac Toe features the usage of the Gogi library, which makes it easy to make games like this without having to deal with the complexity of user login, room handling, match making."),
+		gogi.WithVersion("b0.0.1"),
 	)
 	g.Listen(":3000")
 }

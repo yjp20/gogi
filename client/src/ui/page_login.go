@@ -9,6 +9,10 @@ type LoginView struct {
 	vecty.Core
 }
 
+func (l *LoginView) Connect() map[interface{}]interface{} {
+	return map[interface{}]interface{}{}
+}
+
 func (l *LoginView) Render() vecty.ComponentOrHTML {
 	return elem.Div(
 		elem.Div(
@@ -19,10 +23,8 @@ func (l *LoginView) Render() vecty.ComponentOrHTML {
 			elem.Div(
 				vecty.Markup(
 					vecty.Class("column"),
-					vecty.Class("is-4-tablet"),
-					vecty.Class("is-3-desktop"),
-					vecty.Class("is-2-widescreen"),
-					vecty.Class("is-offset-2-desktop"),
+					vecty.Class("is-8-tablet"),
+					vecty.Class("is-9-desktop"),
 				),
 				elem.Div(
 					vecty.Markup(
@@ -30,81 +32,61 @@ func (l *LoginView) Render() vecty.ComponentOrHTML {
 					),
 					elem.Div(
 						vecty.Markup(
+							vecty.Class("card-header"),
+						),
+						l.renderInformation(),
+					),
+					elem.Div(
+						vecty.Markup(
 							vecty.Class("card-body"),
 						),
-						&GuestLogin{},
-						&DBLogin{},
+						l.renderDescription(),
 					),
+				),
+				elem.Paragraph(
+					vecty.Markup(
+						vecty.Class("paragraph"),
+						vecty.Class("has-fg-grey"),
+					),
+					vecty.Text("Built with Gogi"),
 				),
 			),
 			elem.Div(
 				vecty.Markup(
 					vecty.Class("column"),
-					vecty.Class("is-8-tablet"),
-					vecty.Class("is-5-desktop"),
-					vecty.Class("is-6-widescreen"),
+					vecty.Class("is-4-tablet"),
+					vecty.Class("is-3-desktop"),
 				),
-				elem.Div(
-					vecty.Markup(),
-					elem.Heading1(
-						vecty.Markup(
-							vecty.Class("title"),
-						),
-						vecty.Text("tic-tac-toe"),
-					),
-					elem.Paragraph(
-						vecty.Markup(
-							vecty.Class("paragraph"),
-						),
-					),
-				),
+				// Authmethods {{newline}} {{range .AuthMethods}} &{{.Name}}{}, {{end}}
 			),
 		),
 	)
 }
 
-type GuestLogin struct {
-	vecty.Core
-}
-
-func (g *GuestLogin) Render() vecty.ComponentOrHTML {
+func (l *LoginView) renderInformation() vecty.ComponentOrHTML {
 	return elem.Div(
-		elem.Div(
+		elem.Heading1(
 			vecty.Markup(
-				vecty.Class("field"),
+				vecty.Class("title"),
 			),
-			elem.Paragraph(
-				vecty.Markup(
-					vecty.Class("label"),
-				),
-				vecty.Text("Nickname"),
-			),
-			elem.Input(
-				vecty.Markup(
-					vecty.Property("type", "text"),
-					vecty.Property("name", "nick"),
-				),
-			),
+			vecty.Text("{{.Name}}"),
 		),
-		elem.Div(
-			vecty.Markup(
-				vecty.Class("field"),
-			),
-			elem.Button(
+		vecty.If(len("{{.Version}}") > 0,
+			elem.Heading2(
 				vecty.Markup(
-					vecty.Class("button"),
-					vecty.Property("type", "button"),
+					vecty.Class("subtitle"),
 				),
-				vecty.Text("Guest Login"),
+				vecty.Text("{{.Version}}"),
 			),
 		),
 	)
 }
 
-type DBLogin struct {
-	vecty.Core
-}
-
-func (d *DBLogin) Render() vecty.ComponentOrHTML {
-	return elem.Div()
+func (l *LoginView) renderDescription() vecty.ComponentOrHTML {
+	return elem.Paragraph(
+		vecty.Markup(
+			vecty.Class("paragraph"),
+		),
+		vecty.Text("{{.Description}}"),
+	)
 }
